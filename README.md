@@ -20,13 +20,13 @@
 ## 📲 如何安装
 
 ### 安卓版 (Android)
-1. 前往 [Releases]([https://github.com/Azzpk/ch8values/releases](https://github.com/Azzpk/-/releases/tag/%E4%B8%AD%E5%9B%BD%E7%A4%BE%E4%BC%9A%E6%84%8F%E8%AF%86%E5%BD%A2%E6%80%81%E5%80%BE%E5%90%91%E6%B5%8B%E8%AF%95)) 页面。
+1. 前往 [Releases](https://github.com/[Azzpk]/ch8values/releases)
 2. 下载 `ch8values-v0.0.1.apk`。
 3. 在手机设置中允许“安装未知来源应用”，即可完成安装。
 
 ### iOS 版
 > **说明**：由于 iOS 平台的限制，建议通过以下方式安装：
-* **越狱设备**：直接下载并安装本仓库提供的 `.ipa` 文件 前往 [Releases]([https://github.com/Azzpk/ch8values/releases](https://github.com/Azzpk/-/releases/tag/%E4%B8%AD%E5%9B%BD%E7%A4%BE%E4%BC%9A%E6%84%8F%E8%AF%86%E5%BD%A2%E6%80%81%E5%80%BE%E5%90%91%E6%B5%8B%E8%AF%95)) 页面。
+* **越狱设备**：直接下载并安装本仓库提供的 `.ipa` 文件 前往 [Releases](https://github.com/[Azzpk]/ch8values/releases)
 * **开发者自签**：下载本项目源代码，使用 Xcode 或侧载工具（如 AltStore/Sideloadly）进行安装。
 
 ## 🛠️ 技术特点
