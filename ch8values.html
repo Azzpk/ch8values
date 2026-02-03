@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国社会意识形态倾向测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red-primary: #D4372B;
+            --red-dark: #8B1E1E;
+            --gold: #FFD700;
+            --bg-dark: #1A1A1A;
+            --bg-light: #F5F5F0;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+            color: #F5F5F0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .serif { font-family: 'Noto Serif SC', serif; }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--red-primary) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(212, 55, 43, 0.2);
+            border-color: rgba(212, 55, 43, 0.3);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--red-primary) 0%, var(--red-dark) 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 55, 43, 0.4);
+        }
+        
+        .option-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #F5F5F0;
+            padding: 1rem 1.5rem;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .option-btn:hover {
+            background: rgba(212, 55, 43, 0.1);
+            border-color: var(--red-primary);
+        }
+        
+        .option-btn.selected {
+            background: linear-gradient(135deg, rgba(212, 55, 43, 0.4) 0%, rgba(139, 30, 30, 0.4) 100%);
+            border-color: var(--red-primary);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--red-primary) 0%, var(--gold) 100%);
+            transition: width 0.5s ease;
+        }
+        
+        .page { display: none; min-height: 100vh; padding: 2rem; }
+        .page.active { display: flex; }
+        
+        .loader {
+            width: 60px; height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--red-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; }
+    </style>
+</head>
+<body>
+    <div id="starBg" class="fixed inset-0 pointer-events-none z-0"></div>
+    
+    <div id="startPage" class="page active items-center justify-center">
+        <div class="max-w-2xl w-full text-center z-10">
+            <h1 class="text-5xl md:text-7xl font-black serif mb-6 gradient-text">中国社会<br/>意识形态倾向测试</h1>
+            <p class="text-xl mb-8 opacity-80">探索你的政治立场与社会理想</p>
+            <div class="card">
+                <p class="text-lg mb-6 leading-relaxed">本测试包含 <strong class="text-red-400">25 个问题</strong>，涵盖变革态度、权力分配、国际立场等七个维度。</p>
+                <button class="btn" id="startBtn">开始测试</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="questionPage" class="page items-center justify-center">
+        <div class="max-w-3xl w-full z-10">
+            <div class="h-2 bg-white/10 rounded-full mb-8 overflow-hidden">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="card">
+                <div class="text-sm opacity-50 mb-4">问题 <span id="questionNumber">1</span> / 25</div>
+                <h2 class="text-2xl md:text-3xl serif font-bold mb-8" id="questionText">加载中...</h2>
+                <div id="optionsContainer" class="space-y-3"></div>
+                <div class="flex justify-between mt-8 pt-6 border-t border-white/10">
+                    <button class="px-6 py-2 rounded-full bg-white/5 hover:bg-white/10" id="prevBtn">上一题</button>
+                    <span class="opacity-30 self-center">点击选项即选定</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="loadingPage" class="page flex-col items-center justify-center">
+        <div class="loader mb-8"></div>
+        <h2 class="text-3xl serif font-bold mb-4">分析中...</h2>
+    </div>
+    
+    <div id="resultPage" class="page items-center justify-center py-12">
+        <div class="max-w-4xl w-full z-10">
+            <h1 class="text-4xl serif font-black text-center mb-8 gradient-text">测试结果</h1>
+            <div class="card mb-8 text-center">
+                <div class="w-24 h-24 mx-auto mb-4 bg-red-600/20 rounded-full flex items-center justify-center border-2 border-red-500">
+                    <span id="avatarChar" class="text-4xl font-bold text-red-500">?</span>
+                </div>
+                <h2 class="text-4xl serif font-black mb-2" id="ideologyTitle">意识形态</h2>
+                <p class="text-xl text-gold/80 mb-6" id="personName">代表人物</p>
+                <blockquote class="italic text-lg opacity-80 border-l-4 border-red-500 pl-4 py-2 text-left" id="quote"></blockquote>
+            </div>
+            
+            <div class="card mb-8">
+                <h3 class="text-xl font-bold mb-6 text-center">多维度分析</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="chartsGrid"></div>
+            </div>
+
+            <div class="card mb-8">
+                <h3 class="text-xl font-bold mb-4">深度解析</h3>
+                <div id="analysis" class="opacity-90 leading-relaxed space-y-4 text-justify"></div>
+            </div>
+            
+            <div class="text-center">
+                <button class="btn" onclick="location.reload()">重新测试</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 数据配置 ---
+        const questions = [
+            { id: 1, text: "如果现有的社会分配机制已经无法弥补贫富差距，那么推倒重来是唯一的出路。", dim: "revolution", pos: true },
+            { id: 2, text: "社会的进步必须建立在维护秩序和稳定的基础上，任何激进的变动都会让普通人承受代价。", dim: "revolution", pos: false },
+            { id: 3, text: "与其通过漫长的协商去修补旧系统，不如建立一个完全由先进理论指导的新体制。", dim: "revolution", pos: true },
+            { id: 4, text: "社会的发展应该遵循客观的经济规律，即使这在短期内看起来不够“人性化”。", dim: "science", pos: true },
+            { id: 5, text: "人类的道德感和对大同世界的追求，比冷冰冰的数据指标更能决定政策的好坏。", dim: "science", pos: false },
+            { id: 6, text: "衡量一个制度是否优越，唯一标准是它能否大幅度提高生产力。", dim: "science", pos: true },
+            { id: 7, text: "在面对大型基建或公共安全危机时，高度集中的指挥体系是最高效的选择。", dim: "central", pos: true },
+            { id: 8, text: "基层社区和地方政府应该拥有更多自主决策权，因为他们更了解百姓的真实需求。", dim: "central", pos: false },
+            { id: 9, text: "个人的自由表达权在任何时候都不应该为了“大局意识”而做出妥协。", dim: "central", pos: false },
+            { id: 10, text: "国家利益是外交的核心原则，所谓的“全人类共同利益”在现实面前不值一提。", dim: "internat", pos: false },
+            { id: 11, text: "我们应该首先关注本国劳动者的福利，而不是跨国企业的全球布局。", dim: "internat", pos: false },
+            { id: 12, text: "真正的进步主义者应该支持打破国界阻碍，推动全球资源和财富的再分配。", dim: "internat", pos: true },
+            { id: 13, text: "一个强有力的领导核心是社会实现长治久安和跨越式发展的必要前提。", dim: "party", pos: true },
+            { id: 14, text: "基层群众通过自发形成的劳动组织来维权，比依赖上级分配更可靠。", dim: "party", pos: false },
+            { id: 15, text: "社会管理应该由受过高度专业训练的精英团体来主导，而非由群众运动决定。", dim: "party", pos: true },
+            { id: 16, text: "在彻底解决贫困之前，环境保护不应成为制约工业化的理由。", dim: "prod", pos: true },
+            { id: 17, text: "绿水青山就是金山银山，如果牺牲环境来换取增长，这种增长是没有意义的。", dim: "prod", pos: false },
+            { id: 18, text: "为了应对气候危机，即使这意味着降低现有的物质生活水平，我们也应当接受。", dim: "prod", pos: false },
+            { id: 19, text: "传统家庭伦理和集体价值观是社会的基石，不应被过度的个人主义所瓦解。", dim: "conser", pos: true },
+            { id: 20, text: "为了保护本国传统文化，应该对外国文化的涌入和影响保持审慎。", dim: "conser", pos: true },
+            { id: 21, text: "所谓的“传统偏见”应该随着时代发展被彻底抛弃。", dim: "conser", pos: false },
+            { id: 22, text: "国有企业应该在关键行业中占据主导地位，以保障国家经济安全。", dim: "central", pos: true },
+            { id: 23, text: "效率优先，兼顾公平——在做大蛋糕和分好蛋糕之间，应该优先做大。", dim: "science", pos: true },
+            { id: 24, text: "在核心技术领域，自主可控比国际合作更重要。", dim: "internat", pos: false },
+            { id: 25, text: "个人的成长应该优先服务于集体的需要，而非追求完全的个性发展。", dim: "conser", pos: true }
+        ];
+
+        const ideologies = [
+            { name: "正统马克思主义者", person: "卡尔·马克思", quote: "哲学家们只是用不同的方式解释世界，而问题在于改变世界。", cond: s => s.revolution > 60 && s.science > 60, desc: "你坚信社会发展遵循客观规律，主张通过根本性变革实现公平。你具有强烈的国际主义视野，认为生产力的发展是推动社会形态演进的终极动力。" },
+            { name: "社会民主主义改良派", person: "伯恩施坦", quote: "运动就是一切，目的是微不足道的。", cond: s => s.revolution < 40 && s.internat > 50, desc: "你相信通过温和改良而非革命来实现社会进步。你重视程序正义和制度建设，主张在现有框架内通过二次分配缓和矛盾。" },
+            { name: "技术官僚主义者", person: "圣西门", quote: "让科学家和工业家来治理国家。", cond: s => s.science > 70 && s.central > 60, desc: "你坚信专业知识和科学管理是解决社会问题的关键。你认为治理应由精英主导，效率和结果导向是评判制度的核心标准。" },
+            { name: "实用主义中立者", person: "邓小平", quote: "不管黑猫白猫，抓住老鼠就是好猫。", cond: s => true, desc: "你不拘泥于教条，而是根据实际效果评判政策优劣。你重视生产力发展，认为“发展才是硬道理”，在各种倾向间寻找务实的平衡点。" }
+        ];
+
+        // --- 逻辑引擎 ---
+        let currentIdx = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+
+        function initStars() {
+            const bg = document.getElementById('starBg');
+            for(let i=0; i<80; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = star.style.height = Math.random() * 3 + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                bg.appendChild(star);
+            }
+        }
+
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            document.getElementById('questionNumber').innerText = currentIdx + 1;
+            document.getElementById('questionText').innerText = q.text;
+            document.getElementById('progressFill').style.width = `${((currentIdx + 1)/questions.length)*100}%`;
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            
+            [
+                {t: "强烈赞同", v: 2}, {t: "赞同", v: 1}, {t: "中立", v: 0}, 
+                {t: "反对", v: -1}, {t: "强烈反对", v: -2}
+            ].forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn ${userAnswers[currentIdx] === opt.v ? 'selected' : ''}`;
+                btn.innerText = opt.t;
+                btn.onclick = () => {
+                    userAnswers[currentIdx] = opt.v;
+                    if(currentIdx < questions.length - 1) {
+                        currentIdx++;
+                        renderQuestion();
+                    } else {
+                        processResults();
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function processResults() {
+            showPage('loadingPage');
+            setTimeout(() => {
+                const dims = { revolution:0, science:0, central:0, internat:0, party:0, prod:0, conser:0 };
+                const counts = { revolution:0, science:0, central:0, internat:0, party:0, prod:0, conser:0 };
+
+                questions.forEach((q, i) => {
+                    const val = userAnswers[i];
+                    dims[q.dim] += q.pos ? val : -val;
+                    counts[q.dim]++;
+                });
+
+                const finalScores = {};
+                for(let key in dims) {
+                    const max = counts[key] * 2;
+                    finalScores[key] = ((dims[key] + max) / (max * 2)) * 100;
+                }
+
+                const result = ideologies.find(i => i.cond(finalScores)) || ideologies[ideologies.length-1];
+                displayResult(result, finalScores);
+            }, 1500);
+        }
+
+        function displayResult(res, scores) {
+            showPage('resultPage');
+            document.getElementById('ideologyTitle').innerText = res.name;
+            document.getElementById('personName').innerText = res.person;
+            document.getElementById('avatarChar').innerText = res.person[0];
+            document.getElementById('quote').innerText = `“${res.quote}”`;
+            document.getElementById('analysis').innerText = res.desc;
+
+            const grid = document.getElementById('chartsGrid');
+            grid.innerHTML = '';
+            const labels = {
+                revolution:'变革', science:'理论', central:'集权', 
+                internat:'国际', party:'组织', prod:'生产', conser:'文化'
+            };
+
+            for(let key in scores) {
+                const container = document.createElement('div');
+                container.className = 'text-center';
+                container.innerHTML = `<canvas id="c-${key}" width="100" height="100"></canvas><p class="text-xs mt-2 opacity-60">${labels[key]}</p>`;
+                grid.appendChild(container);
+                
+                new Chart(document.getElementById(`c-${key}`), {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [scores[key], 100 - scores[key]],
+                            backgroundColor: ['#D4372B', '#333'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '70%', plugins: { tooltip: {enabled: false}, legend: {display: false} } }
+                });
+            }
+        }
+
+        // --- 绑定入口 ---
+        window.onload = () => {
+            initStars();
+            document.getElementById('startBtn').onclick = () => {
+                showPage('questionPage');
+                renderQuestion();
+            };
+            document.getElementById('prevBtn').onclick = () => {
+                if(currentIdx > 0) {
+                    currentIdx--;
+                    renderQuestion();
+                }
+            };
+        };
+    </script>
+</body>
+</html>
